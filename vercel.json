@@ -1,0 +1,17 @@
+{
+  "rewrites": [
+    { "source": "/proxy",   "destination": "/api/proxy" },
+    { "source": "/codegen", "destination": "/api/codegen" },
+    { "source": "/health",  "destination": "/api/health" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin",  "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,PATCH,DELETE,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "*" }
+      ]
+    }
+  ]
+}
