@@ -15,8 +15,21 @@ function formatSize(bytes: number): string {
   return `${bytes} B`
 }
 
+// Extract credentials from URL (user:pass@host) and return clean URL + Basic auth header
+function extractCredentials(rawUrl: string): { cleanUrl: string; authHeader?: string } {
+  try {
+    const parsed = new URL(rawUrl)
+    if (parsed.username || parsed.password) {
+      const creds = Buffer.from(`${decodeURIComponent(parsed.username)}:${decodeURIComponent(parsed.password)}`).toString('base64')
+      parsed.username = ''
+      parsed.password = ''
+      return { cleanUrl: parsed.toString(), authHeader: `Basic ${creds}` }
+    }
+  } catch {}
+  return { cleanUrl: rawUrl }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Handle CORS preflight
   res.setHeader('Access-Control-Allow-Origin',  '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', '*')
@@ -32,8 +45,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const reqHeaders: Record<string, string> = { ...headers }
-    let requestBody: string | undefined
 
+    // Strip credentials from URL — pass as Authorization: Basic instead
+    const { cleanUrl, authHeader } = extractCredentials(url)
+    if (authHeader && !reqHeaders['Authorization'] && !reqHeaders['authorization']) {
+      reqHeaders['Authorization'] = authHeader
+    }
+
+    let requestBody: string | undefined
     if (body && !['GET', 'HEAD'].includes(method.toUpperCase())) {
       if (typeof body === 'object') {
         requestBody = JSON.stringify(body)
@@ -44,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const response = await fetch(url, {
+    const response = await fetch(cleanUrl, {
       method:  method.toUpperCase(),
       headers: reqHeaders,
       body:    requestBody,
