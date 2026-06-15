@@ -1,12 +1,16 @@
 {
-  "rewrites": [
-    { "source": "/proxy",   "destination": "/api/proxy" },
-    { "source": "/codegen", "destination": "/api/codegen" },
-    { "source": "/health",  "destination": "/api/health" }
+  "version": 2,
+  "builds": [
+    { "src": "api/*.ts", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/proxy",   "dest": "/api/proxy.ts" },
+    { "src": "/codegen", "dest": "/api/codegen.ts" },
+    { "src": "/health",  "dest": "/api/health.ts" }
   ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Origin",  "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,PATCH,DELETE,OPTIONS" },
